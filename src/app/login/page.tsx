@@ -2,7 +2,8 @@
 
 import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
-import { ShieldCheck, Mail, Lock, Loader2 } from 'lucide-react'
+import { ShieldCheck, Mail, Lock, Loader2, ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 
 export default function LoginPage() {
     const [email, setEmail] = useState('')
@@ -57,6 +58,15 @@ export default function LoginPage() {
                 </div>
 
                 <div className="bg-white border border-slate-200 p-8 rounded-3xl shadow-xl shadow-slate-200/50">
+                    <div className="mb-8">
+                        <Link
+                            href="/"
+                            className="text-brand-slate hover:text-brand-navy flex items-center gap-2 mb-4 transition-colors"
+                        >
+                            <ArrowLeft className="w-4 h-4" />
+                            Back to Marketplace
+                        </Link>
+                    </div>
                     <form onSubmit={handleLogin} className="space-y-6">
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-brand-navy ml-1">Email Address</label>
@@ -104,11 +114,8 @@ export default function LoginPage() {
                     </form>
 
                     <div className="mt-8 pt-8 border-t text-center">
-                        <p className="text-sm text-brand-slate">
-                            Don't have an account?{' '}
-                            <button onClick={handleSignUp} className="text-brand-navy font-bold hover:underline">
-                                Create One
-                            </button>
+                        <p className="mt-8 text-center text-sm text-brand-slate/60">
+                            Don&apos;t have an account? <button onClick={handleSignUp} className="text-brand-navy font-semibold hover:underline">Create One</button>
                         </p>
                     </div>
                 </div>

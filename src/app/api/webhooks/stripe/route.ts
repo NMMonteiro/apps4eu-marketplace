@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { Resend } from 'resend'
+import Stripe from 'stripe'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -23,14 +24,15 @@ export async function POST(req: Request) {
             signature,
             process.env.STRIPE_WEBHOOK_SECRET!
         )
-    } catch (err: any) {
-        return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 })
+    } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : 'Unknown error';
+        return new NextResponse(`Webhook Error: ${message}`, { status: 400 })
     }
 
     if (event.type === 'checkout.session.completed') {
-        const session = event.data.object as any
-        const userId = session.metadata.userId
-        const productId = session.metadata.productId
+        const session = event.data.object as Stripe.Checkout.Session
+        const userId = session.metadata?.userId
+        const productId = session.metadata?.productId
 
         if (!userId || !productId) {
             return new NextResponse('Metadata missing', { status: 400 })
@@ -50,7 +52,7 @@ export async function POST(req: Request) {
             data: {
                 paymentIntentId: session.payment_intent as string,
                 userId: userId,
-                amount: (session.amount_total / 100).toString(),
+                amount: ((session.amount_total || 0) / 100).toString(),
                 status: 'completed'
             }
         })
