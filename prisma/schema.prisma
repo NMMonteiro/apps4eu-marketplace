@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Product {
+  id           String    @id @default(uuid())
+  name         String
+  description  String?
+  price         Decimal   @db.Decimal(10, 2)
+  stripePriceId String?
+  s3_file_path  String?
+  licenses     License[]
+  createdAt    DateTime  @default(now())
+}
+
+model License {
+  id          String   @id @default(uuid())
+  userId      String   // Supabase Auth User ID
+  productId   String
+  product     Product  @relation(fields: [productId], references: [id])
+  licenseKey  String   @unique @default(uuid())
+  status      String   @default("active") // active/revoked
+  createdAt   DateTime @default(now())
+}
+
+model Transaction {
+  id              String   @id @default(uuid())
+  paymentIntentId String   @unique
+  userId          String
+  amount          Decimal  @db.Decimal(10, 2)
+  status          String
+  createdAt       DateTime @default(now())
+}
