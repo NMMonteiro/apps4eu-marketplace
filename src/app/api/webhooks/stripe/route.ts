@@ -7,6 +7,8 @@ import Stripe from 'stripe'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+export const dynamic = 'force-dynamic'
+
 export async function POST(req: Request) {
     const body = await req.text()
     const headerList = await headers()
