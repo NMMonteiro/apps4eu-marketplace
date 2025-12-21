@@ -2,6 +2,8 @@ import { prisma } from '@/lib/prisma'
 import { createCheckoutSession } from '@/lib/actions/checkout'
 import { ShoppingCart, Star, CheckCircle2 } from 'lucide-react'
 
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   const products = await prisma.product.findMany({
     orderBy: { createdAt: 'desc' }
