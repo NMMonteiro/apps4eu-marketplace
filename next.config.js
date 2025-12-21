@@ -1,12 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactCompiler: true,
-    eslint: {
-        ignoreDuringBuilds: true,
-    },
-    typescript: {
-        ignoreBuildErrors: true,
-    },
+    // Removed deprecated eslint and typescript config blocks
 };
 
 module.exports = nextConfig;
