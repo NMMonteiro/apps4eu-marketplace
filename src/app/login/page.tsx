@@ -2,7 +2,7 @@
 
 export const dynamic = 'force-dynamic'
 
-import { createClient } from '@/lib/supabase/client'
+import { login, signup } from './actions'
 import { useState } from 'react'
 import { ShieldCheck, Mail, Lock, Loader2, ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
@@ -12,36 +12,30 @@ export default function LoginPage() {
     const [password, setPassword] = useState('')
     const [loading, setLoading] = useState(false)
     const [message, setMessage] = useState<string | null>(null)
-    const supabase = createClient()
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
         setMessage(null)
 
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        })
+        const result = await login(email, password)
 
-        if (error) {
-            setMessage(error.message)
+        // If redirect happens in action, this code might not be reached or result is undefined
+        // But if error returned:
+        if (result?.error) {
+            setMessage(result.error)
             setLoading(false)
-        } else {
-            window.location.href = '/dashboard'
         }
     }
 
     const handleSignUp = async () => {
         setLoading(true)
         setMessage(null)
-        const { error } = await supabase.auth.signUp({
-            email,
-            password,
-        })
 
-        if (error) {
-            setMessage(error.message)
+        const result = await signup(email, password)
+
+        if (result?.error) {
+            setMessage(result.error)
         } else {
             setMessage('Check your email for the confirmation link.')
         }
