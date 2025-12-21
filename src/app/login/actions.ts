@@ -8,6 +8,8 @@ export async function login(email: string, password: string) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     console.log('Supabase URL (Config):', supabaseUrl)
 
+    let shouldRedirect = false
+
     try {
         const supabase = await createClient()
 
@@ -21,10 +23,14 @@ export async function login(email: string, password: string) {
             return { error: error.message }
         }
 
-        redirect('/dashboard')
+        shouldRedirect = true
     } catch (err) {
         console.error('Unexpected Login Error:', err)
         return { error: 'Unexpected system error. Check server logs.' }
+    }
+
+    if (shouldRedirect) {
+        redirect('/dashboard')
     }
 }
 
