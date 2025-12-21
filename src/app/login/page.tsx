@@ -1,5 +1,7 @@
 'use client'
 
+export const dynamic = 'force-dynamic'
+
 import { createClient } from '@/lib/supabase/client'
 import { useState } from 'react'
 import { ShieldCheck, Mail, Lock, Loader2, ArrowLeft } from 'lucide-react'
