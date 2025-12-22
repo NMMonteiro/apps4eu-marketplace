@@ -3,7 +3,9 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, LayoutDashboard, User } from "lucide-react";
+import { ShoppingCart, LayoutDashboard, User, LogOut } from "lucide-react";
+import { createClient } from "@/lib/supabase/server";
+import { logout } from "./login/actions";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,11 +22,14 @@ export const metadata: Metadata = {
   description: "Secure digital product marketplace for European projects.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased bg-slate-50 min-h-screen`} suppressHydrationWarning>
@@ -44,14 +49,30 @@ export default function RootLayout({
             </Link>
 
             <div className="flex items-center gap-6">
-              <Link href="/dashboard" className="text-sm font-medium text-brand-slate hover:text-brand-navy flex items-center gap-2">
-                <LayoutDashboard className="w-4 h-4" />
-                Dashboard
-              </Link>
-              <Link href="/admin" className="text-sm font-medium text-brand-slate hover:text-brand-navy flex items-center gap-2">
-                <User className="w-4 h-4" />
-                Admin
-              </Link>
+              {user ? (
+                <>
+                  <Link href="/dashboard" className="text-sm font-medium text-brand-slate hover:text-brand-navy flex items-center gap-2">
+                    <LayoutDashboard className="w-4 h-4" />
+                    Dashboard
+                  </Link>
+                  <form action={logout}>
+                    <button type="submit" className="text-sm font-medium text-brand-slate hover:text-red-600 flex items-center gap-2 cursor-pointer transition-colors">
+                      <LogOut className="w-4 h-4" />
+                      Logout
+                    </button>
+                  </form>
+                  <div className="h-6 w-[1px] bg-slate-200 mx-2" />
+                  <div className="text-sm font-semibold text-brand-navy flex items-center gap-2">
+                    <User className="w-4 h-4" />
+                    <span className="max-w-[150px] truncate">{user.email}</span>
+                  </div>
+                </>
+              ) : (
+                <Link href="/login" className="text-sm font-medium text-brand-slate hover:text-brand-navy flex items-center gap-2">
+                  <User className="w-4 h-4" />
+                  Sign In
+                </Link>
+              )}
               <div className="h-6 w-[1px] bg-slate-200 mx-2" />
               <button className="p-2 text-brand-slate hover:text-brand-navy relative">
                 <ShoppingCart className="w-5 h-5" />

@@ -52,6 +52,12 @@ export async function login(email: string, password: string) {
     }
 }
 
+export async function logout() {
+    const supabase = await createClient()
+    await supabase.auth.signOut()
+    redirect('/')
+}
+
 export async function signup(email: string, password: string) {
     console.log('--- DEBUG SIGNUP ---')
     console.log('Email:', email)
