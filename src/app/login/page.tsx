@@ -27,7 +27,8 @@ export default function LoginPage() {
             setMessage(result.error)
             setLoading(false)
         } else if (mode === 'signup') {
-            setMessage('Check your email for the confirmation link.')
+            setMessage('Account created successfully! You can now sign in.')
+            setMode('login')
             setLoading(false)
         }
     }

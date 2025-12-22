@@ -72,14 +72,13 @@ export async function signup(email: string, password: string) {
     try {
         const supabase = await createClient()
 
-        console.log('Attempting Supabase SignUp...')
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
         })
 
         if (error) {
-            console.error('Supabase Signup Error DETAILS:', JSON.stringify(error))
+            console.error('Supabase Signup Error:', error.message, error.status)
             return { error: `${error.message} (Code: ${error.status})` }
         }
 
