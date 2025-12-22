@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { updateUserRole, deleteUser } from '@/app/admin/user-actions'
-import { User, Shield, ShieldOff, Trash2, Search, Loader2 } from 'lucide-react'
+import { updateUserRole, deleteUser, confirmUser } from '@/app/admin/user-actions'
+import { User, Shield, ShieldOff, Trash2, Search, Loader2, CheckCircle2 } from 'lucide-react'
 
 interface UserData {
     id: string
     email?: string
     app_metadata: any
+    email_confirmed_at?: string
     created_at: string
 }
 
@@ -32,6 +33,22 @@ export default function UserTable({ initialUsers }: { initialUsers: UserData[] }
         }
         setLoading(null)
     }
+
+    const handleConfirm = async (userId: string) => {
+        setLoading(userId)
+        const result = await confirmUser(userId)
+        if (result.success) {
+            setUsers(users.map(u =>
+                u.id === userId
+                    ? { ...u, email_confirmed_at: new Date().toISOString() }
+                    : u
+            ))
+        }
+        setLoading(null)
+    }
+
+    // ... rest of the component up to the table body ...
+    // Note: I will only replace the relevant part inside the map function for brevity in this chunk
 
     const handleDelete = async (userId: string) => {
         if (!confirm('Are you sure you want to delete this user? This action cannot be undone.')) return
@@ -76,7 +93,7 @@ export default function UserTable({ initialUsers }: { initialUsers: UserData[] }
                     <tbody className="divide-y text-sm">
                         {filteredUsers.map((user) => {
                             const isAdmin = user.app_metadata?.role === 'admin'
-                            const isSelf = false // Logic for current user ID could be added if available
+                            const isConfirmed = !!user.email_confirmed_at
 
                             return (
                                 <tr key={user.id} className="hover:bg-slate-50 transition-colors">
@@ -85,15 +102,30 @@ export default function UserTable({ initialUsers }: { initialUsers: UserData[] }
                                         <div className="text-[10px] font-mono text-brand-slate truncate max-w-[150px]">{user.id}</div>
                                     </td>
                                     <td className="px-6 py-4">
-                                        <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase ${isAdmin ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
-                                            {isAdmin ? 'Admin' : 'User'}
-                                        </span>
+                                        <div className="flex flex-col gap-1 items-start">
+                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${isAdmin ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-600'}`}>
+                                                {isAdmin ? 'Admin' : 'User'}
+                                            </span>
+                                            <span className={`px-2 py-0.5 rounded-full text-[9px] font-bold uppercase ${isConfirmed ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>
+                                                {isConfirmed ? 'Verified' : 'Pending'}
+                                            </span>
+                                        </div>
                                     </td>
-                                    <td className="px-6 py-4 text-brand-slate">
+                                    <td className="px-6 py-4 text-brand-slate uppercase text-[10px] font-medium">
                                         {new Date(user.created_at).toLocaleDateString()}
                                     </td>
                                     <td className="px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-2">
+                                            {!isConfirmed && (
+                                                <button
+                                                    onClick={() => handleConfirm(user.id)}
+                                                    disabled={loading === user.id}
+                                                    className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+                                                    title="Verify User"
+                                                >
+                                                    {loading === user.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                                                </button>
+                                            )}
                                             <button
                                                 onClick={() => handleToggleRole(user.id, isAdmin)}
                                                 disabled={loading === user.id}

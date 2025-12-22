@@ -76,3 +76,21 @@ export async function createUser(email: string, password: string, isAdmin: boole
         return { error: err instanceof Error ? err.message : 'Failed to create user' }
     }
 }
+/**
+ * Manually confirm a user's email
+ */
+export async function confirmUser(userId: string) {
+    try {
+        const supabase = await createAdminClient()
+        const { error } = await supabase.auth.admin.updateUserById(userId, {
+            email_confirm: true
+        })
+
+        if (error) throw error
+        revalidatePath('/admin')
+        return { success: true }
+    } catch (err) {
+        console.error('Error confirming user:', err)
+        return { error: 'Failed to confirm user' }
+    }
+}
