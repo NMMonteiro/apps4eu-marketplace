@@ -122,6 +122,7 @@ export async function signup(email: string, password: string) {
                 })
 
                 if (template) {
+                    console.log('Email template found, generating link...')
                     const redirectTo = `${host}/auth/confirm`
 
                     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
@@ -134,21 +135,27 @@ export async function signup(email: string, password: string) {
                     if (linkError) {
                         console.error('Error generating link:', linkError.message)
                     } else {
-                        // 4. Construct our OWN link that points to our SECURE routing
                         const confirmLink = `${host}/auth/confirm?token_hash=${linkData.properties.hashed_token}&type=signup`
+                        console.log('Sending branded email via Resend to:', email)
 
-                        // 5. Send ONE Branded Email via Resend
-                        await resend.emails.send({
+                        const resendResult = await resend.emails.send({
                             from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
                             to: email,
                             subject: template.subject,
                             html: template.body.replace('{{email}}', email).replace('{{link}}', confirmLink),
                         })
-                        console.log('Single branded email sent via Resend')
+
+                        if (resendResult.error) {
+                            console.error('Resend API Error:', resendResult.error)
+                        } else {
+                            console.log('Resend success! ID:', resendResult.data?.id)
+                        }
                     }
+                } else {
+                    console.log('No "signup-confirmation" template found in database.')
                 }
             } catch (emailErr) {
-                console.error('Error in post-signup email flow:', emailErr)
+                console.error('CRITICAL Error in post-signup email flow:', emailErr)
             }
         }
 
