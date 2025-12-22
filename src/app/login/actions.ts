@@ -58,6 +58,8 @@ export async function signup(email: string, password: string) {
     }
 
     try {
+        const headerList = await headers()
+        const host = headerList.get('origin') || process.env.NEXT_PUBLIC_SITE_URL
         const supabase = await createAdminClient()
 
         // DEBUG: Check Service Role Keys (Safe Logging)
@@ -83,14 +85,37 @@ export async function signup(email: string, password: string) {
 
         if (createError) {
             console.error('Supabase Admin Create Error (FULL):', JSON.stringify(createError, null, 2))
-            console.error('Error Message:', createError.message)
-            console.error('Error Status:', createError.status)
 
-            // Revert to helpful user-facing errors
+            // SURFACE DEBUG INFO IN ERROR
+            const debugInfo = `| SR=${!!srKey}(${srKey?.length}) ADM=${!!adminKey}(${adminKey?.length}) | URL=${process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 15)}...`
+
+            if (createError.message.includes('not allowed') || createError.status === 401) {
+                console.log('Admin signup blocked. Trying fallback to public signUp...')
+                // FALLBACK: If Admin is blocked, try the standard public signUp
+                // This might send a duplicate email but it's better than a broken signup
+                const publicSupabase = await createClient()
+                const { data: pubData, error: pubError } = await publicSupabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        emailRedirectTo: `${host}/auth/callback`,
+                    }
+                })
+
+                if (pubError) {
+                    return { error: `Signup failed (Public Fallback): ${pubError.message} (Code: ${pubError.status}) ${debugInfo}` }
+                }
+
+                return {
+                    success: true,
+                    message: 'Account created via public fallback. Please check your email (you might receive two, please use the branded one if it arrives).'
+                }
+            }
+
             if (createError.message.includes('already registered')) {
                 return { error: 'This email is already registered. Please log in.' }
             }
-            return { error: `Signup failed: ${createError.message} (Code: ${createError.status})` }
+            return { error: `Signup failed: ${createError.message} (Code: ${createError.status}) ${debugInfo}` }
         }
 
         if (userData.user) {
@@ -101,10 +126,7 @@ export async function signup(email: string, password: string) {
                 })
 
                 if (template) {
-                    // 3. Generate confirmation link
-                    const headerList = await headers()
-                    const host = headerList.get('origin') || process.env.NEXT_PUBLIC_SITE_URL
-                    const redirectTo = `${host}/auth/confirm` // Note: Constructing the link manually with /auth/confirm
+                    const redirectTo = `${host}/auth/confirm`
 
                     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
                         type: 'signup',
