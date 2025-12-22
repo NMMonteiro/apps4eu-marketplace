@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
+import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
 import { Resend } from 'resend'
 
@@ -78,10 +79,15 @@ export async function signup(email: string, password: string) {
 
                 if (template) {
                     // 3. Generate confirmation link (requires Service Role Key)
+                    const headerList = await headers()
+                    const host = headerList.get('origin') || process.env.NEXT_PUBLIC_SITE_URL
+                    const redirectTo = `${host}/auth/callback`
+
                     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
                         type: 'signup',
                         email: email,
-                        options: { redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback` }
+                        password: password,
+                        options: { redirectTo }
                     })
 
                     if (linkError) {
