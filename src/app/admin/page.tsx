@@ -28,14 +28,18 @@ async function addProduct(formData: FormData) {
     const name = formData.get('name') as string
     const description = formData.get('description') as string
     const price = formData.get('price') as string
-    const s3Path = formData.get('s3_path') as string
+    const appUrl = formData.get('app_url') as string
+    const imageUrl = formData.get('image_url') as string
+    const category = formData.get('category') as string
 
     await prisma.product.create({
         data: {
             name,
             description,
             price: parseFloat(price),
-            s3_file_path: s3Path
+            appUrl,
+            imageUrl,
+            category
         }
     })
 
@@ -109,7 +113,10 @@ export default async function AdminPage() {
                                     <div key={product.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
                                         <div>
                                             <div className="font-medium text-brand-navy">{product.name}</div>
-                                            <div className="text-sm text-brand-slate">${product.price.toString()} • {product.s3_file_path || 'No file path'}</div>
+                                            <div className="text-sm text-brand-slate">
+                                                ${product.price.toString()} • {product.category || 'General'}
+                                                {product.appUrl && <span className="ml-2 text-blue-500 underline">App Link</span>}
+                                            </div>
                                         </div>
                                         <button className="text-xs font-medium text-brand-navy hover:underline text-slate-400">Edit</button>
                                     </div>
@@ -138,9 +145,19 @@ export default async function AdminPage() {
                                 <label className="text-sm font-medium text-brand-navy">Description</label>
                                 <textarea name="description" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none resize-none" rows={3} />
                             </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-brand-navy">Category</label>
+                                    <input name="category" type="text" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none" placeholder="AI Tools, Business, etc." />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-brand-navy">Thumbnail Image URL</label>
+                                    <input name="image_url" type="text" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none" placeholder="https://..." />
+                                </div>
+                            </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium text-brand-navy">S3 File Path</label>
-                                <input name="s3_path" type="text" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none" placeholder="vault/apps/product_v1.zip" />
+                                <label className="text-sm font-medium text-brand-navy">Hosted App URL (Launch Link)</label>
+                                <input name="app_url" type="text" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none" placeholder="https://your-app.com" />
                             </div>
                             <button type="submit" className="px-6 py-2 bg-brand-navy text-white rounded-lg hover:bg-brand-navy-light transition-colors font-medium">
                                 Create Product

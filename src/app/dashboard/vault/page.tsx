@@ -23,11 +23,19 @@ export default async function AppVaultPage() {
     }
 
     // Fetch user's active licenses
-    const licenses = await prisma.license.findMany({
+    const rawLicenses = await prisma.license.findMany({
         where: { userId: user.id, status: 'active' },
         include: { product: true },
         orderBy: { createdAt: 'desc' }
     })
+
+    const licenses = rawLicenses.map(l => ({
+        ...l,
+        product: {
+            ...l.product,
+            price: Number(l.product.price)
+        }
+    }))
 
     return (
         <div className="min-h-screen bg-slate-50 py-12">

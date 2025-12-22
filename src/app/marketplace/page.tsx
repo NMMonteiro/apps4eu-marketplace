@@ -7,9 +7,14 @@ import ProductCard from '@/components/marketplace/ProductCard'
 export const dynamic = 'force-dynamic'
 
 export default async function MarketplacePage() {
-    const products = await prisma.product.findMany({
+    const rawProducts = await prisma.product.findMany({
         orderBy: { createdAt: 'desc' }
     })
+
+    const products = rawProducts.map(p => ({
+        ...p,
+        price: Number(p.price)
+    }))
 
     const categories = ['All', ...new Set(products.map(p => p.category || 'General'))]
 
@@ -45,8 +50,8 @@ export default async function MarketplacePage() {
                             <button
                                 key={cat}
                                 className={`px-4 py-2 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${cat === 'All'
-                                        ? 'bg-brand-navy text-white shadow-lg shadow-brand-navy/20'
-                                        : 'text-brand-slate hover:bg-slate-50'
+                                    ? 'bg-brand-navy text-white shadow-lg shadow-brand-navy/20'
+                                    : 'text-brand-slate hover:bg-slate-50'
                                     }`}
                             >
                                 {cat}

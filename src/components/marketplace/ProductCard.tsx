@@ -1,13 +1,32 @@
+'use client'
 
 import { Product } from '@prisma/client'
-import { ArrowUpRight, Zap, Star, ShieldCheck } from 'lucide-react'
+import { ArrowUpRight, Zap, Star, ShieldCheck, Loader2 } from 'lucide-react'
 import Image from 'next/image'
+import { createCheckoutSession } from '@/app/marketplace/store-actions'
+import { useState } from 'react'
 
 interface ProductCardProps {
-    product: any // Using any briefly due to decimal type conflicts, will refine
+    product: any
 }
 
 export default function ProductCard({ product }: ProductCardProps) {
+    const [loading, setLoading] = useState(false)
+
+    const handlePurchase = async () => {
+        setLoading(true)
+        try {
+            const result = await createCheckoutSession(product.id)
+            if (result?.error) {
+                alert(result.error)
+            }
+        } catch (err) {
+            console.error(err)
+        } finally {
+            setLoading(false)
+        }
+    }
+
     return (
         <div className="group relative bg-white rounded-3xl border shadow-sm hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 overflow-hidden">
             {/* Image Placeholder/Visual */}
@@ -56,7 +75,7 @@ export default function ProductCard({ product }: ProductCardProps) {
                     <div>
                         <span className="text-xs font-bold text-brand-slate uppercase tracking-widest block mb-0.5">Lifetime Access</span>
                         <div className="flex items-end gap-1">
-                            <span className="text-2xl font-black text-brand-navy">${Number(product.price).toString()}</span>
+                            <span className="text-2xl font-black text-brand-navy">${product.price.toString()}</span>
                             <span className="text-xs font-medium text-brand-slate mb-1">USD</span>
                         </div>
                     </div>
