@@ -33,7 +33,8 @@ export async function createClient() {
  */
 export async function createAdminClient() {
     const url = (process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.com').replace(/\/$/, '')
-    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder'
+    // Try the new key name first, then fall back to the old one
+    const key = process.env.ADMIN_SERVICE_ROLE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder'
 
     // For admin operations, we use the standard supabase-js client to avoid cookie/session overhead
     return createSupabaseClient(url, key, {

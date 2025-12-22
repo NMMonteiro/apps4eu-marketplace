@@ -50,7 +50,8 @@ export async function logout() {
 }
 
 export async function signup(email: string, password: string) {
-    console.log('--- CLEAN SIGNUP START (Admin-led) ---')
+    const DEPLOY_VERS = "v2.0-FINAL-CHECK"
+    console.log(`--- [${DEPLOY_VERS}] CLEAN SIGNUP START ---`)
 
     if (!email || !password) {
         return { error: 'Email and password are required for sign up.' }
@@ -59,15 +60,17 @@ export async function signup(email: string, password: string) {
     try {
         const supabase = await createAdminClient()
 
-        // DEBUG: Check Service Role Key (Safe Logging)
+        // DEBUG: Check Service Role Keys (Safe Logging)
         const srKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-        console.log('--- DEBUG: Service Role Key Info ---')
-        console.log('Key Present:', !!srKey)
-        console.log('Key Length:', srKey?.length || 0)
-        if (srKey && srKey.length > 10) {
-            console.log('Key Sample:', srKey.substring(0, 5) + '...' + srKey.substring(srKey.length - 5))
-        }
-        console.log('------------------------------------')
+        const adminKey = process.env.ADMIN_SERVICE_ROLE_KEY
+        console.log('--- DEBUG: Admin Key check ---')
+        console.log('SUPABASE_SERVICE_ROLE_KEY Present:', !!srKey, 'Len:', srKey?.length || 0)
+        console.log('ADMIN_SERVICE_ROLE_KEY Present:', !!adminKey, 'Len:', adminKey?.length || 0)
+
+        // Use whichever is actually there
+        const effectiveKey = adminKey || srKey
+        console.log('Effective Key used (Sample):', effectiveKey ? effectiveKey.substring(0, 5) + '...' + effectiveKey.substring(effectiveKey.length - 5) : 'NONE')
+        console.log('-------------------------------')
 
         // 1. Create the user using ADMIN API (this bypasses auto-emails and gives us control)
         // We set email_confirm: false so they still need to verify via our link.
