@@ -5,12 +5,19 @@ import { redirect } from 'next/navigation'
 
 export async function login(email: string, password: string) {
     console.log('Attempting login for:', email)
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    console.log('Supabase URL (Config):', supabaseUrl)
+    console.log('--- DEBUG INFO ---')
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('Supabase Anon Key (Redacted):', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + '...')
+    console.log('-------------------')
 
     let shouldRedirect = false
 
     try {
+        if (!process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL === 'https://example.com') {
+            console.error('CRITICAL: Supabase URL is not configured or is default.')
+            return { error: 'Server configuration error: Supabase URL missing.' }
+        }
+
         const supabase = await createClient()
 
         console.log('Attempting Supabase SignIn...')
