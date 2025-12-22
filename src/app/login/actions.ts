@@ -93,10 +93,14 @@ export async function signup(email: string, password: string) {
                     if (linkError) {
                         console.error('Error generating link:', linkError.message)
                     } else {
-                        // 4. Send Custom Branded Email via Resend
+                        // 4. Construct a SECURE, server-side confirmation link
+                        // Instead of the broken Supabase link, we point to our own /auth/confirm
+                        const confirmLink = `${host}/auth/confirm?token_hash=${linkData.properties.hashed_token}&type=signup`
+
+                        // 5. Send Custom Branded Email via Resend
                         const html = template.body
                             .replace('{{email}}', email)
-                            .replace('{{link}}', linkData.properties.action_link)
+                            .replace('{{link}}', confirmLink)
 
                         await resend.emails.send({
                             from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
@@ -104,7 +108,7 @@ export async function signup(email: string, password: string) {
                             subject: template.subject,
                             html: html,
                         })
-                        console.log('Custom branded email sent via Resend')
+                        console.log('Custom branded email sent via Resend with secure confirmation link')
                     }
                 }
             } catch (emailErr) {
