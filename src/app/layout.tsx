@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, LayoutDashboard, User, LogOut } from "lucide-react";
+import { ShoppingCart, LayoutDashboard, User, LogOut, Settings } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "./login/actions";
 
