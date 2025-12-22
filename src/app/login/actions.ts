@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createClient, createAdminClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import { headers } from 'next/headers'
 import { prisma } from '@/lib/prisma'
@@ -57,7 +57,7 @@ export async function signup(email: string, password: string) {
     }
 
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
 
         // 1. Create the user using ADMIN API (this bypasses auto-emails and gives us control)
         // We set email_confirm: false so they still need to verify via our link.

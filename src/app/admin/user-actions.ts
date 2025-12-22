@@ -1,6 +1,6 @@
 'use server'
 
-import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 /**
@@ -8,7 +8,7 @@ import { revalidatePath } from 'next/cache'
  */
 export async function listUsers() {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const { data: { users }, error } = await supabase.auth.admin.listUsers()
 
         if (error) throw error
@@ -24,7 +24,7 @@ export async function listUsers() {
  */
 export async function updateUserRole(userId: string, isAdmin: boolean) {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const { error } = await supabase.auth.admin.updateUserById(userId, {
             app_metadata: { role: isAdmin ? 'admin' : 'user' }
         })
@@ -43,7 +43,7 @@ export async function updateUserRole(userId: string, isAdmin: boolean) {
  */
 export async function deleteUser(userId: string) {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const { error } = await supabase.auth.admin.deleteUser(userId)
 
         if (error) throw error
@@ -60,7 +60,7 @@ export async function deleteUser(userId: string) {
  */
 export async function createUser(email: string, password: string, isAdmin: boolean) {
     try {
-        const supabase = await createClient()
+        const supabase = await createAdminClient()
         const { error } = await supabase.auth.admin.createUser({
             email,
             password,
