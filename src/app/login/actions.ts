@@ -62,16 +62,18 @@ export async function signup(email: string, password: string) {
         const host = headerList.get('origin') || process.env.NEXT_PUBLIC_SITE_URL
         const supabase = await createAdminClient()
 
+        // 0. DIAGNOSTIC: Test Admin API connectivity
+        const { error: testErr, data: testData } = await supabase.auth.admin.listUsers({ page: 1, perPage: 1 })
+        console.log('--- ADMIN API CONNECTIVITY TEST ---')
+        console.log('listUsers error:', testErr ? `${testErr.message} (${testErr.status})` : 'NONE (Success)')
+
         // DEBUG: Check Service Role Keys (Safe Logging)
         const srKey = process.env.SUPABASE_SERVICE_ROLE_KEY
         const adminKey = process.env.ADMIN_SERVICE_ROLE_KEY
-        console.log('--- DEBUG: Admin Key check ---')
         console.log('SUPABASE_SERVICE_ROLE_KEY Present:', !!srKey, 'Len:', srKey?.length || 0)
         console.log('ADMIN_SERVICE_ROLE_KEY Present:', !!adminKey, 'Len:', adminKey?.length || 0)
 
-        // Use whichever is actually there
-        const effectiveKey = adminKey || srKey
-        console.log('Effective Key used (Sample):', effectiveKey ? effectiveKey.substring(0, 5) + '...' + effectiveKey.substring(effectiveKey.length - 5) : 'NONE')
+        const debugInfo = `| SR=${!!srKey}(${srKey?.length}) ADM=${!!adminKey}(${adminKey?.length}) | TEST=${testErr ? testErr.status : 'OK'} | URL=${process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 15)}...`
         console.log('-------------------------------')
 
         // 1. Create the user using ADMIN API (this bypasses auto-emails and gives us control)
