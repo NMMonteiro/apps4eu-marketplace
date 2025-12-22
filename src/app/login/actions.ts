@@ -25,7 +25,10 @@ export async function login(email: string, password: string) {
 
         if (error) {
             console.error('Supabase Login Error:', error.message, error.status)
-            return { error: `${error.message} (Code: ${error.status})` }
+            const srKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+            const adminKey = process.env.ADMIN_SERVICE_ROLE_KEY
+            const debugInfo = `| SR=${!!srKey}(${srKey?.length}) ADM=${!!adminKey}(${adminKey?.length}) | URL=${process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 15)}...`
+            return { error: `${error.message} (Code: ${error.status}) ${debugInfo}` }
         }
 
         console.log('Login Successful, Session created for:', data.user?.id)
