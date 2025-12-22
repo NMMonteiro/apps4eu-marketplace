@@ -25,10 +25,7 @@ export async function login(email: string, password: string) {
 
         if (error) {
             console.error('Supabase Login Error:', error.message, error.status)
-            const srKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-            const adminKey = process.env.ADMIN_SERVICE_ROLE_KEY
-            const debugInfo = `| SR=${!!srKey}(${srKey?.length}) ADM=${!!adminKey}(${adminKey?.length}) | URL=${process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 15)}...`
-            return { error: `${error.message} (Code: ${error.status}) ${debugInfo}` }
+            return { error: `${error.message} (Code: ${error.status})` }
         }
 
         console.log('Login Successful, Session created for:', data.user?.id)
@@ -79,25 +76,19 @@ export async function signup(email: string, password: string) {
         const debugInfo = `| SR=${!!srKey}(${srKey?.length}) ADM=${!!adminKey}(${adminKey?.length}) | TEST=${testErr ? testErr.status : 'OK'} | URL=${process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 15)}...`
         console.log('-------------------------------')
 
-        // 1. Create the user using ADMIN API (this bypasses auto-emails and gives us control)
-        // We set email_confirm: false so they still need to verify via our link.
+        // 1. Create the user using ADMIN API (auto-confirm for now to bypass hurdles)
         const { data: userData, error: createError } = await supabase.auth.admin.createUser({
             email,
             password,
-            email_confirm: false,
+            email_confirm: true,
             app_metadata: { role: 'user' }
         })
 
         if (createError) {
             console.error('Supabase Admin Create Error (FULL):', JSON.stringify(createError, null, 2))
 
-            // SURFACE DEBUG INFO IN ERROR
-            const debugInfo = `| SR=${!!srKey}(${srKey?.length}) ADM=${!!adminKey}(${adminKey?.length}) | URL=${process.env.NEXT_PUBLIC_SUPABASE_URL?.substring(0, 15)}...`
-
             if (createError.message.includes('not allowed') || createError.status === 401) {
                 console.log('Admin signup blocked. Trying fallback to public signUp...')
-                // FALLBACK: If Admin is blocked, try the standard public signUp
-                // This might send a duplicate email but it's better than a broken signup
                 const publicSupabase = await createClient()
                 const { data: pubData, error: pubError } = await publicSupabase.auth.signUp({
                     email,
@@ -108,19 +99,19 @@ export async function signup(email: string, password: string) {
                 })
 
                 if (pubError) {
-                    return { error: `Signup failed (Public Fallback): ${pubError.message} (Code: ${pubError.status}) ${debugInfo}` }
+                    return { error: `Signup failed: ${pubError.message}` }
                 }
 
                 return {
                     success: true,
-                    message: 'Account created via public fallback. Please check your email (you might receive two, please use the branded one if it arrives).'
+                    message: 'Account created! Please check your email for a confirmation link.'
                 }
             }
 
             if (createError.message.includes('already registered')) {
                 return { error: 'This email is already registered. Please log in.' }
             }
-            return { error: `Signup failed: ${createError.message} (Code: ${createError.status}) ${debugInfo}` }
+            return { error: `Signup failed: ${createError.message}` }
         }
 
         if (userData.user) {
