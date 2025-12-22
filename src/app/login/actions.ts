@@ -28,7 +28,7 @@ export async function login(email: string, password: string) {
 
         if (error) {
             console.error('Supabase Login Error:', error.message, error.status)
-            return { error: error.message }
+            return { error: `${error.message} (Code: ${error.status})` }
         }
 
         console.log('Login Successful, Session created for:', data.user?.id)
