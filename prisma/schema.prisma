@@ -8,14 +8,16 @@ datasource db {
 }
 
 model Product {
-  id           String    @id @default(uuid())
-  name         String
-  description  String?
+  id            String    @id @default(uuid())
+  name          String
+  description   String?
   price         Decimal   @db.Decimal(10, 2)
   stripePriceId String?
-  s3_file_path  String?
-  licenses     License[]
-  createdAt    DateTime  @default(now())
+  appUrl        String?   // The URL to the hosted webapp
+  imageUrl      String?   // Demo/Product image
+  category      String?   // e.g. "AI Tools", "Business", "Marketing"
+  licenses      License[]
+  createdAt     DateTime  @default(now())
 }
 
 model License {

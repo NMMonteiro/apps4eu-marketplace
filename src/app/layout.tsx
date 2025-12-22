@@ -3,7 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Link from "next/link";
 import Image from "next/image";
-import { ShoppingCart, LayoutDashboard, User, LogOut, Settings } from "lucide-react";
+import { ShoppingCart, LayoutDashboard, User, LogOut, Settings, ShoppingBag } from "lucide-react";
 import { createClient } from "@/lib/supabase/server";
 import { logout } from "./login/actions";
 
@@ -51,6 +51,10 @@ export default async function RootLayout({
             <div className="flex items-center gap-6">
               {user ? (
                 <>
+                  <Link href="/marketplace" className="text-sm font-medium text-brand-slate hover:text-brand-navy flex items-center gap-2">
+                    <ShoppingBag className="w-4 h-4" />
+                    Marketplace
+                  </Link>
                   <Link href="/dashboard" className="text-sm font-medium text-brand-slate hover:text-brand-navy flex items-center gap-2">
                     <LayoutDashboard className="w-4 h-4" />
                     Dashboard
