@@ -55,6 +55,12 @@ export default async function RootLayout({
                     <LayoutDashboard className="w-4 h-4" />
                     Dashboard
                   </Link>
+                  {user.app_metadata?.role === 'admin' && (
+                    <Link href="/admin" className="text-sm font-medium text-brand-slate hover:text-brand-navy flex items-center gap-2">
+                      <Settings className="w-4 h-4" />
+                      Admin
+                    </Link>
+                  )}
                   <form action={logout}>
                     <button type="submit" className="text-sm font-medium text-brand-slate hover:text-red-600 flex items-center gap-2 cursor-pointer transition-colors">
                       <LogOut className="w-4 h-4" />
