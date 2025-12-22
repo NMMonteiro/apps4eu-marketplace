@@ -50,7 +50,7 @@ export async function logout() {
 }
 
 export async function signup(email: string, password: string) {
-    console.log('--- CUSTOM SIGNUP START ---')
+    console.log('--- CLEAN SIGNUP START (Admin-led) ---')
 
     if (!email || !password) {
         return { error: 'Email and password are required for sign up.' }
@@ -59,18 +59,25 @@ export async function signup(email: string, password: string) {
     try {
         const supabase = await createClient()
 
-        // 1. Create the user in Supabase
-        const { data, error: signUpError } = await supabase.auth.signUp({
+        // 1. Create the user using ADMIN API (this bypasses auto-emails and gives us control)
+        // We set email_confirm: false so they still need to verify via our link.
+        const { data: userData, error: createError } = await supabase.auth.admin.createUser({
             email,
             password,
+            email_confirm: false,
+            app_metadata: { role: 'user' }
         })
 
-        if (signUpError) {
-            console.error('Supabase Signup Error:', signUpError.message)
-            return { error: `${signUpError.message} (Code: ${signUpError.status})` }
+        if (createError) {
+            console.error('Supabase Admin Create Error:', createError.message)
+            // If user already exists, Supabase returns a specific error
+            if (createError.message.includes('already registered')) {
+                return { error: 'This email is already registered. Please log in.' }
+            }
+            return { error: `Signup failed: ${createError.message}` }
         }
 
-        if (data.user) {
+        if (userData.user) {
             try {
                 // 2. Fetch the custom template
                 const template = await prisma.emailTemplate.findUnique({
@@ -78,10 +85,10 @@ export async function signup(email: string, password: string) {
                 })
 
                 if (template) {
-                    // 3. Generate confirmation link (requires Service Role Key)
+                    // 3. Generate confirmation link
                     const headerList = await headers()
                     const host = headerList.get('origin') || process.env.NEXT_PUBLIC_SITE_URL
-                    const redirectTo = `${host}/auth/callback`
+                    const redirectTo = `${host}/auth/confirm` // Note: Constructing the link manually with /auth/confirm
 
                     const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
                         type: 'signup',
@@ -93,36 +100,27 @@ export async function signup(email: string, password: string) {
                     if (linkError) {
                         console.error('Error generating link:', linkError.message)
                     } else {
-                        // 4. Construct a SECURE, server-side confirmation link
-                        // Instead of the broken Supabase link, we point to our own /auth/confirm
+                        // 4. Construct our OWN link that points to our SECURE routing
                         const confirmLink = `${host}/auth/confirm?token_hash=${linkData.properties.hashed_token}&type=signup`
 
-                        // 5. Send Custom Branded Email via Resend
-                        const html = template.body
-                            .replace('{{email}}', email)
-                            .replace('{{link}}', confirmLink)
-
+                        // 5. Send ONE Branded Email via Resend
                         await resend.emails.send({
                             from: process.env.EMAIL_FROM || 'onboarding@resend.dev',
                             to: email,
                             subject: template.subject,
-                            html: html,
+                            html: template.body.replace('{{email}}', email).replace('{{link}}', confirmLink),
                         })
-                        console.log('Custom branded email sent via Resend with secure confirmation link')
+                        console.log('Single branded email sent via Resend')
                     }
                 }
             } catch (emailErr) {
-                console.error('Error sending custom email (falling back to default):', emailErr)
+                console.error('Error in post-signup email flow:', emailErr)
             }
         }
 
-        console.log('Signup Process Complete')
         return { success: true }
     } catch (err) {
         console.error('CRITICAL Exception during Signup:', err)
-        if (err instanceof Error) {
-            return { error: `System Error: ${err.message}` }
-        }
         return { error: 'Unexpected system error during signup.' }
     }
 }
