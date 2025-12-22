@@ -79,12 +79,15 @@ export async function signup(email: string, password: string) {
         })
 
         if (createError) {
-            console.error('Supabase Admin Create Error:', createError.message)
-            // If user already exists, Supabase returns a specific error
+            console.error('Supabase Admin Create Error (FULL):', JSON.stringify(createError, null, 2))
+            console.error('Error Message:', createError.message)
+            console.error('Error Status:', createError.status)
+
+            // Revert to helpful user-facing errors
             if (createError.message.includes('already registered')) {
                 return { error: 'This email is already registered. Please log in.' }
             }
-            return { error: `Signup failed: ${createError.message}` }
+            return { error: `Signup failed: ${createError.message} (Code: ${createError.status})` }
         }
 
         if (userData.user) {
