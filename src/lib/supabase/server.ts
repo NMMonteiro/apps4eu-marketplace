@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient as createSupabaseClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 
 export async function createClient() {
@@ -33,14 +34,14 @@ export async function createClient() {
  * CRITICAL: Use ONLY in server-side contexts where you trust the operation.
  */
 export async function createAdminClient() {
-    return createServerClient(
-        (process.env.NEXT_PUBLIC_SUPABASE_URL?.startsWith('http') ? process.env.NEXT_PUBLIC_SUPABASE_URL : 'https://example.com'),
-        process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder',
-        {
-            cookies: {
-                getAll() { return [] },
-                setAll() { },
-            },
+    const url = process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://example.com'
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY || 'placeholder'
+
+    // For admin operations, we use the standard supabase-js client to avoid cookie/session overhead
+    return createSupabaseClient(url, key, {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
         }
-    )
+    })
 }

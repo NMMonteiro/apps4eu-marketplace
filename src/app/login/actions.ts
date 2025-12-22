@@ -59,6 +59,16 @@ export async function signup(email: string, password: string) {
     try {
         const supabase = await createAdminClient()
 
+        // DEBUG: Check Service Role Key (Safe Logging)
+        const srKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+        console.log('--- DEBUG: Service Role Key Info ---')
+        console.log('Key Present:', !!srKey)
+        console.log('Key Length:', srKey?.length || 0)
+        if (srKey && srKey.length > 10) {
+            console.log('Key Sample:', srKey.substring(0, 5) + '...' + srKey.substring(srKey.length - 5))
+        }
+        console.log('------------------------------------')
+
         // 1. Create the user using ADMIN API (this bypasses auto-emails and gives us control)
         // We set email_confirm: false so they still need to verify via our link.
         const { data: userData, error: createError } = await supabase.auth.admin.createUser({
