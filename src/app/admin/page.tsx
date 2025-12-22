@@ -1,7 +1,9 @@
 import { prisma } from '@/lib/prisma'
-import { Plus, Settings, Box, Database, DollarSign, Mail } from 'lucide-react'
+import { Plus, Settings, Box, Database, DollarSign, Mail, Users } from 'lucide-react'
 import { revalidatePath } from 'next/cache'
 import EmailTemplateEditor from '@/components/admin/EmailTemplateEditor'
+import UserTable from '@/components/admin/UserTable'
+import { listUsers } from '@/app/admin/user-actions'
 
 const DEFAULT_SIGNUP_BODY = `
 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
@@ -67,6 +69,9 @@ export default async function AdminPage() {
         })
     }
 
+    // Fetch Users from Supabase Auth
+    const { users, error: userError } = await listUsers()
+
     return (
         <div className="container mx-auto px-4 py-12">
             <div className="flex items-end justify-between mb-12">
@@ -83,8 +88,12 @@ export default async function AdminPage() {
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                {/* Product Management */}
-                <div className="lg:col-span-2 space-y-8">
+                {/* Main Management Area */}
+                <div className="lg:col-span-2 space-y-12">
+                    {/* User Management Section */}
+                    <UserTable initialUsers={users} />
+
+                    {/* Product Management */}
                     <div className="bg-white border rounded-xl overflow-hidden shadow-sm">
                         <div className="px-6 py-4 border-b flex items-center justify-between bg-slate-50/50">
                             <div className="flex items-center gap-2 font-semibold text-brand-navy">
@@ -159,6 +168,11 @@ export default async function AdminPage() {
                             <div>
                                 <div className="text-2xl font-bold">${transactions.reduce((acc, t) => acc + Number(t.amount), 0).toFixed(2)}</div>
                                 <div className="text-xs opacity-60">Recent Revenue (Last 5)</div>
+                            </div>
+                            <div className="h-[1px] bg-white/10" />
+                            <div className="flex items-center justify-between">
+                                <div className="text-xs opacity-60">Registered Users</div>
+                                <div className="text-lg font-bold">{users.length}</div>
                             </div>
                         </div>
                     </div>
