@@ -60,8 +60,8 @@ export async function logout() {
 
 export async function signup(email: string, password: string) {
     console.log('--- DEBUG SIGNUP ---')
-    console.log('Email:', email)
-    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('Email:', JSON.stringify(email))
+    console.log('Password Length:', password?.length || 0)
     console.log('--------------------')
 
     if (!email || !password) {
