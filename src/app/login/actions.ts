@@ -13,19 +13,24 @@ export async function login(email: string, password: string) {
     try {
         const supabase = await createClient()
 
-        const { error } = await supabase.auth.signInWithPassword({
+        console.log('Attempting Supabase SignIn...')
+        const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         })
 
         if (error) {
-            console.error('Supabase Login Error:', error)
+            console.error('Supabase Login Error:', error.message, error.status)
             return { error: error.message }
         }
 
+        console.log('Login Successful, Session created for:', data.user?.id)
         shouldRedirect = true
     } catch (err) {
-        console.error('Unexpected Login Error:', err)
+        console.error('Unexpected Exception during Login:', err)
+        if (err instanceof Error) {
+            return { error: `System Error: ${err.message}` }
+        }
         return { error: 'Unexpected system error. Check server logs.' }
     }
 
