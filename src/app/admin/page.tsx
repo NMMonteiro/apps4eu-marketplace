@@ -1,6 +1,25 @@
 import { prisma } from '@/lib/prisma'
-import { Plus, Settings, Box, Database, DollarSign } from 'lucide-react'
+import { Plus, Settings, Box, Database, DollarSign, Mail } from 'lucide-react'
 import { revalidatePath } from 'next/cache'
+import EmailTemplateEditor from '@/components/admin/EmailTemplateEditor'
+
+const DEFAULT_SIGNUP_BODY = `
+<div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+  <h1 style="color: #0F172A; font-size: 24px;">Welcome to Apps4EU!</h1>
+  <p style="color: #475569; font-size: 16px; line-height: 1.6;">
+    Thanks for signing up for the Apps4EU Marketplace. Please click the button below to verify your email address and join our community.
+  </p>
+  <div style="margin: 30px 0; text-align: center;">
+    <a href="{{link}}" style="background-color: #0F172A; color: white; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: bold; display: inline-block;">
+      Confirm My Email
+    </a>
+  </div>
+  <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;" />
+  <p style="color: #94A3B8; font-size: 12px; text-align: center;">
+    If you didn't create an account, you can safely ignore this email.
+  </p>
+</div>
+`
 
 async function addProduct(formData: FormData) {
     'use server'
@@ -32,6 +51,21 @@ export default async function AdminPage() {
         take: 5,
         orderBy: { createdAt: 'desc' }
     })
+
+    // Fetch or Seed Default Signup Confirmation Template
+    let signupTemplate = await prisma.emailTemplate.findUnique({
+        where: { slug: 'signup-confirmation' }
+    })
+
+    if (!signupTemplate) {
+        signupTemplate = await prisma.emailTemplate.create({
+            data: {
+                slug: 'signup-confirmation',
+                subject: 'Confirm your account for Apps4EU Marketplace',
+                body: DEFAULT_SIGNUP_BODY
+            }
+        })
+    }
 
     return (
         <div className="container mx-auto px-4 py-12">
@@ -104,6 +138,9 @@ export default async function AdminPage() {
                             </button>
                         </form>
                     </div>
+
+                    {/* Email Template Management */}
+                    <EmailTemplateEditor initialTemplate={signupTemplate} />
                 </div>
 
                 {/* Sidebar Stats */}
