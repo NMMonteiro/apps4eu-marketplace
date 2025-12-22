@@ -29,11 +29,14 @@ export default async function AppVaultPage() {
         orderBy: { createdAt: 'desc' }
     })
 
-    const licenses = rawLicenses.map(l => ({
+    const licenses = (rawLicenses as any[]).map(l => ({
         ...l,
         product: {
             ...l.product,
-            price: Number(l.product.price)
+            price: Number(l.product.price),
+            price1m: l.product.price1m ? Number(l.product.price1m) : null,
+            price12m: l.product.price12m ? Number(l.product.price12m) : null,
+            price24m: l.product.price24m ? Number(l.product.price24m) : null,
         }
     }))
 
@@ -82,7 +85,15 @@ export default async function AppVaultPage() {
                                 <div className="space-y-3 mb-8">
                                     <div className="flex items-center gap-2 text-xs text-brand-slate font-medium">
                                         <Clock className="w-3.5 h-3.5" />
-                                        Purchased: {new Date(license.createdAt).toLocaleDateString()}
+                                        {license.expiresAt ? (
+                                            <>
+                                                Expires: <span className={new Date(license.expiresAt) < new Date() ? 'text-red-500 font-bold' : ''}>
+                                                    {new Date(license.expiresAt).toLocaleDateString()}
+                                                </span>
+                                            </>
+                                        ) : (
+                                            <>Purchased: {new Date(license.createdAt).toLocaleDateString()}</>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2 text-xs text-brand-slate font-medium truncate">
                                         <Package className="w-3.5 h-3.5" />

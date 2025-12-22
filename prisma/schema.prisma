@@ -11,8 +11,15 @@ model Product {
   id            String    @id @default(uuid())
   name          String
   description   String?
-  price         Decimal   @db.Decimal(10, 2)
+  price         Decimal   @db.Decimal(10, 2) // Lifetime or default price
   stripePriceId String?
+  
+  // Subscription Pricing
+  billingType   String    @default("LIFETIME") // LIFETIME or SUBSCRIPTION
+  price1m       Decimal?  @db.Decimal(10, 2)
+  price12m      Decimal?  @db.Decimal(10, 2)
+  price24m      Decimal?  @db.Decimal(10, 2)
+  
   appUrl        String?   // The URL to the hosted webapp
   imageUrl      String?   // Demo/Product image
   category      String?   // e.g. "AI Tools", "Business", "Marketing"
@@ -21,13 +28,14 @@ model Product {
 }
 
 model License {
-  id          String   @id @default(uuid())
-  userId      String   // Supabase Auth User ID
+  id          String    @id @default(uuid())
+  userId      String    // Supabase Auth User ID
   productId   String
-  product     Product  @relation(fields: [productId], references: [id])
-  licenseKey  String   @unique @default(uuid())
-  status      String   @default("active") // active/revoked
-  createdAt   DateTime @default(now())
+  product     Product   @relation(fields: [productId], references: [id])
+  licenseKey  String    @unique @default(uuid())
+  status      String    @default("active") // active/revoked
+  expiresAt   DateTime? // For subscriptions
+  createdAt   DateTime  @default(now())
 }
 
 model Transaction {

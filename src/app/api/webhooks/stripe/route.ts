@@ -12,7 +12,6 @@ export async function POST(req: Request) {
     const body = await req.text()
     const headerList = await headers()
     const signature = headerList.get('stripe-signature')
-
     if (!signature) {
         return new NextResponse('Missing signature', { status: 400 })
     }
@@ -34,6 +33,7 @@ export async function POST(req: Request) {
         const session = event.data.object as Stripe.Checkout.Session
         const userId = session.metadata?.userId
         const productId = session.metadata?.productId
+        const plan = session.metadata?.plan || 'lifetime'
 
         if (!userId || !productId) {
             return new NextResponse('Metadata missing', { status: 400 })
@@ -51,19 +51,33 @@ export async function POST(req: Request) {
         // 2. Create Transaction
         await prisma.transaction.create({
             data: {
-                paymentIntentId: session.payment_intent as string,
+                paymentIntentId: (session.payment_intent as string) || (session.subscription as string) || session.id,
                 userId: userId,
                 amount: ((session.amount_total || 0) / 100).toString(),
                 status: 'completed'
             }
         })
 
-        // 3. Generate License
+        // 3. Calculate Expiration
+        let expiresAt: Date | null = null
+        if (plan === '1m') {
+            expiresAt = new Date()
+            expiresAt.setMonth(expiresAt.getMonth() + 1)
+        } else if (plan === '12m') {
+            expiresAt = new Date()
+            expiresAt.setFullYear(expiresAt.getFullYear() + 1)
+        } else if (plan === '24m') {
+            expiresAt = new Date()
+            expiresAt.setFullYear(expiresAt.getFullYear() + 2)
+        }
+
+        // 4. Generate License
         const license = await prisma.license.create({
             data: {
                 userId: userId,
                 productId: productId,
-                status: 'active'
+                status: 'active',
+                expiresAt: expiresAt
             }
         })
 

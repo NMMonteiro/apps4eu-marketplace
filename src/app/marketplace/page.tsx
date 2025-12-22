@@ -4,6 +4,8 @@ import { ShoppingBag, Sparkles, LayoutGrid, Zap } from 'lucide-react'
 import Link from 'next/link'
 import ProductCard from '@/components/marketplace/ProductCard'
 
+import MarketplaceHero from '@/components/marketplace/MarketplaceHero'
+
 export const dynamic = 'force-dynamic'
 
 export default async function MarketplacePage() {
@@ -11,40 +13,23 @@ export default async function MarketplacePage() {
         orderBy: { createdAt: 'desc' }
     })
 
-    const products = rawProducts.map(p => ({
+    const products = (rawProducts as any[]).map(p => ({
         ...p,
-        price: Number(p.price)
+        price: Number(p.price),
+        price1m: p.price1m ? Number(p.price1m) : null,
+        price12m: p.price12m ? Number(p.price12m) : null,
+        price24m: p.price24m ? Number(p.price24m) : null,
     }))
 
     const categories = ['All', ...new Set(products.map(p => p.category || 'General'))]
 
     return (
         <div className="min-h-screen bg-slate-50 pb-20">
-            {/* Hero Section */}
-            <div className="bg-brand-navy text-white py-20 relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-full opacity-10 pointer-events-none">
-                    <div className="absolute top-10 left-10 w-64 h-64 rounded-full bg-blue-400 blur-3xl animate-pulse" />
-                    <div className="absolute bottom-10 right-10 w-96 h-96 rounded-full bg-indigo-600 blur-3xl" />
-                </div>
-
-                <div className="container mx-auto px-4 relative z-10 text-center">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-blue-200 text-sm font-medium mb-6 border border-white/10">
-                        <Sparkles className="w-4 h-4" />
-                        Premium App Marketplace
-                    </div>
-                    <h1 className="text-4xl md:text-6xl font-bold mb-6 tracking-tight">
-                        Power your projects with <br />
-                        <span className="text-blue-400">Next-Gen Webapps.</span>
-                    </h1>
-                    <p className="text-blue-100/60 max-w-2xl mx-auto text-lg md:text-xl font-medium leading-relaxed">
-                        Secure access to enterprise-grade tools, AI engines, and management platforms for European projects.
-                    </p>
-                </div>
-            </div>
+            <MarketplaceHero />
 
             {/* Filtering & Layout Header */}
-            <div className="container mx-auto px-4 -mt-8">
-                <div className="bg-white rounded-2xl shadow-xl border p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div className="container mx-auto px-4 relative z-20 -mt-10">
+                <div className="bg-white/80 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/50 p-4 flex flex-col md:flex-row items-center justify-between gap-4">
                     <div className="flex items-center gap-2 overflow-x-auto pb-2 md:pb-0 w-full md:w-auto no-scrollbar">
                         {categories.map((cat) => (
                             <button

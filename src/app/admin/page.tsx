@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import Link from 'next/link'
 import { Plus, Settings, Box, Database, DollarSign, Mail, Users } from 'lucide-react'
 import { revalidatePath } from 'next/cache'
 import EmailTemplateEditor from '@/components/admin/EmailTemplateEditor'
@@ -23,35 +24,22 @@ const DEFAULT_SIGNUP_BODY = `
 </div>
 `
 
-async function addProduct(formData: FormData) {
-    'use server'
-    const name = formData.get('name') as string
-    const description = formData.get('description') as string
-    const price = formData.get('price') as string
-    const appUrl = formData.get('app_url') as string
-    const imageUrl = formData.get('image_url') as string
-    const category = formData.get('category') as string
-
-    await prisma.product.create({
-        data: {
-            name,
-            description,
-            price: parseFloat(price),
-            appUrl,
-            imageUrl,
-            category
-        }
-    })
-
-    revalidatePath('/admin')
-}
+import { addProduct } from '@/app/admin/product-actions'
 
 export const dynamic = 'force-dynamic'
 
 export default async function AdminPage() {
-    const products = await prisma.product.findMany({
+    const rawProducts = await prisma.product.findMany({
         orderBy: { createdAt: 'desc' }
     })
+
+    const products = (rawProducts as any[]).map(p => ({
+        ...p,
+        price: Number(p.price),
+        price1m: p.price1m ? Number(p.price1m) : null,
+        price12m: p.price12m ? Number(p.price12m) : null,
+        price24m: p.price24m ? Number(p.price24m) : null,
+    }))
 
     const transactions = await prisma.transaction.findMany({
         take: 5,
@@ -111,14 +99,21 @@ export default async function AdminPage() {
                             ) : (
                                 products.map((product) => (
                                     <div key={product.id} className="px-6 py-4 flex items-center justify-between hover:bg-slate-50 transition-colors">
-                                        <div>
+                                        <div className="flex-grow">
                                             <div className="font-medium text-brand-navy">{product.name}</div>
-                                            <div className="text-sm text-brand-slate">
-                                                ${product.price.toString()} • {product.category || 'General'}
-                                                {product.appUrl && <span className="ml-2 text-blue-500 underline">App Link</span>}
+                                            <div className="text-sm text-brand-slate flex flex-wrap gap-x-3 items-center">
+                                                <span>{product.category || 'General'}</span>
+                                                <span className="h-1 w-1 rounded-full bg-slate-300" />
+                                                <span className="font-bold text-brand-navy">
+                                                    {product.billingType === 'SUBSCRIPTION'
+                                                        ? `Sub: €${product.price1m}/€${product.price12m}/€${product.price24m}`
+                                                        : `Lifetime: €${product.price}`
+                                                    }
+                                                </span>
+                                                {product.appUrl && <span className="text-[10px] bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded border border-blue-100 font-bold uppercase tracking-tighter">Live</span>}
                                             </div>
                                         </div>
-                                        <button className="text-xs font-medium text-brand-navy hover:underline text-slate-400">Edit</button>
+                                        <Link href={`/admin/products/${product.id}/edit`} className="ml-4 px-3 py-1 text-xs font-bold text-brand-navy border rounded-lg hover:bg-white hover:shadow-sm transition-all">Edit</Link>
                                     </div>
                                 ))
                             )}
@@ -133,12 +128,31 @@ export default async function AdminPage() {
                         <form action={addProduct} className="space-y-4">
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-brand-navy">Product Name</label>
-                                    <input name="name" type="text" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none" required />
+                                    <label className="text-sm font-medium text-brand-navy">Default/Lifetime Price (EUR)</label>
+                                    <input name="price" type="number" step="0.01" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none" required />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-brand-navy">Billing Type</label>
+                                    <select name="billing_type" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none">
+                                        <option value="LIFETIME">Lifetime Access</option>
+                                        <option value="SUBSCRIPTION">Subscription Based</option>
+                                    </select>
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium text-brand-navy">Price (USD)</label>
-                                    <input name="price" type="number" step="0.01" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none" required />
+                                    <label className="text-sm font-medium text-brand-navy">Monthly (1m) Price</label>
+                                    <input name="price1m" type="number" step="0.01" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none" placeholder="Empty if not applicable" />
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-brand-navy">Annual (12m) Price</label>
+                                    <input name="price12m" type="number" step="0.01" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none" placeholder="Empty if not applicable" />
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-sm font-medium text-brand-navy">2-Year (24m) Price</label>
+                                    <input name="price24m" type="number" step="0.01" className="w-full px-3 py-2 border rounded-lg focus:ring-1 focus:ring-brand-navy outline-none" placeholder="Empty if not applicable" />
                                 </div>
                             </div>
                             <div className="space-y-2">
@@ -183,7 +197,7 @@ export default async function AdminPage() {
                             </div>
                             <div className="h-[1px] bg-white/10" />
                             <div>
-                                <div className="text-2xl font-bold">${transactions.reduce((acc, t) => acc + Number(t.amount), 0).toFixed(2)}</div>
+                                <div className="text-2xl font-bold">€{transactions.reduce((acc, t) => acc + Number(t.amount), 0).toFixed(2)}</div>
                                 <div className="text-xs opacity-60">Recent Revenue (Last 5)</div>
                             </div>
                             <div className="h-[1px] bg-white/10" />
@@ -203,7 +217,7 @@ export default async function AdminPage() {
                             {transactions.map((t) => (
                                 <div key={t.id} className="flex items-center justify-between">
                                     <span className="text-xs font-mono text-brand-slate truncate max-w-[100px]">{t.paymentIntentId}</span>
-                                    <span className="text-xs font-bold text-brand-navy">${t.amount.toString()}</span>
+                                    <span className="text-xs font-bold text-brand-navy">€{t.amount.toString()}</span>
                                 </div>
                             ))}
                             {transactions.length === 0 && <span className="text-xs text-brand-slate italic">No recent sales</span>}
