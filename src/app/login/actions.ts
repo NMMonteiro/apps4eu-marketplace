@@ -6,9 +6,15 @@ import { redirect } from 'next/navigation'
 export async function login(email: string, password: string) {
     console.log('Attempting login for:', email)
     console.log('--- DEBUG INFO ---')
-    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
-    console.log('Supabase Anon Key (Redacted):', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY?.slice(0, 10) + '...')
+    const sbUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const sbKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    console.log('Supabase URL:', sbUrl)
+    console.log('Supabase Anon Key (Length):', sbKey?.length || 0)
     console.log('-------------------')
+
+    if (!email || !password) {
+        return { error: 'Please enter both email and password.' }
+    }
 
     let shouldRedirect = false
 
@@ -47,16 +53,32 @@ export async function login(email: string, password: string) {
 }
 
 export async function signup(email: string, password: string) {
-    const supabase = await createClient()
+    console.log('--- DEBUG SIGNUP ---')
+    console.log('Email:', email)
+    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL)
+    console.log('--------------------')
 
-    const { error } = await supabase.auth.signUp({
-        email,
-        password,
-    })
-
-    if (error) {
-        return { error: error.message }
+    if (!email || !password) {
+        return { error: 'Email and password are required for sign up.' }
     }
 
-    return { success: true }
+    try {
+        const supabase = await createClient()
+
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+        })
+
+        if (error) {
+            console.error('Supabase Signup Error:', error.message, error.status)
+            return { error: `${error.message} (Code: ${error.status})` }
+        }
+
+        console.log('Signup Successful for:', data.user?.id)
+        return { success: true }
+    } catch (err) {
+        console.error('Unexpected Exception during Signup:', err)
+        return { error: 'Unexpected system error during signup.' }
+    }
 }
